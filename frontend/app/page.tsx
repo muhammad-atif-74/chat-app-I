@@ -4,7 +4,7 @@ import { FormattedResponse } from "@/components/formatted-response";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addChatMessage, createChat, getChatMessages, getChats, getSession, type ChatRecord } from "@/lib/auth-client";
+import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModel } from "@/lib/auth-client";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("")
@@ -13,6 +13,9 @@ export default function Home() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [loadingChats, setLoadingChats] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
+  const [models, setModels] = useState<GeminiModel[]>([])
+  const [selectedModel, setSelectedModel] = useState("gemini-3.6-flash")
+  const [loadingModels, setLoadingModels] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [streamStarted, setStreamStarted] = useState(false)
@@ -35,6 +38,15 @@ export default function Home() {
     }, 0)
     return () => window.clearTimeout(timer)
   }, [user])
+
+  useEffect(() => {
+    if (!hasSettings) return
+    const timer = window.setTimeout(() => {
+      setLoadingModels(true)
+      getGeminiModels().then(setModels).catch(() => setModels([])).finally(() => setLoadingModels(false))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [hasSettings])
 
   useEffect(() => {
     if (!user) return
@@ -85,7 +97,7 @@ export default function Home() {
       const response = await fetch("/api/ask-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getSession()?.idToken || ""}` },
-        body: JSON.stringify({ prompt: normalizedPrompt }),
+        body: JSON.stringify({ prompt: normalizedPrompt, model: selectedModel }),
       })
       if (!response.ok || !response.body) throw new Error("Failed to start response stream")
 
@@ -137,7 +149,7 @@ export default function Home() {
       updateResponse("", true)
       if (!streamedResponse) throw new Error("The AI returned an empty response")
       setMessages((current) => current.map((message, index) => index === current.length - 1 ? { ...message, response: streamedResponse } : message))
-      await addChatMessage(chatId, normalizedPrompt, streamedResponse)
+      await addChatMessage(chatId, normalizedPrompt, streamedResponse, selectedModel)
       getChats().then(setRecentChats).catch(() => undefined)
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : "Failed to get response"
@@ -267,6 +279,10 @@ export default function Home() {
                   }
                 }}
               />
+              <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)} disabled={loadingModels} className="h-10 max-w-36 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
+                {!models.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "Default model"}</option>}
+                {models.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
+              </select>
               <button disabled={isLoading || !prompt.trim()} className="h-10 shrink-0 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300">
                 {isLoading ? "..." : "Send"}
               </button>

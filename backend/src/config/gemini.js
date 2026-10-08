@@ -51,11 +51,22 @@ async function askGemini(prompt, apiKey) {
     }
 }
 
+async function listGeminiModels(apiKey) {
+    const models = [];
+    const pager = await getGeminiClient(apiKey).models.list();
+    for await (const model of pager) {
+        if (model.name) models.push({ id: model.name.replace(/^models\//, ""), name: model.displayName || model.name });
+    }
+    console.log("MODALS FOUND: ", models)
+    return models;
+}
+
 
 async function askGeminiWithStreaming(req, res, apiKey) {
     try {
         console.log("Streaming api called. with req: ", req.body)
         const { prompt } = req.body;
+        const model = typeof req.body?.model === "string" && req.body.model.trim() ? req.body.model.trim() : "gemini-3.6-flash";
         if (!prompt) return res.status(400).json({ error: "Prompt is required" });
         console.log("prompt: ", prompt, " key: ", apiKey)
 
@@ -64,7 +75,7 @@ async function askGeminiWithStreaming(req, res, apiKey) {
         res.setHeader("Connection", "keep-alive");
 
         const stream = await getGeminiClient(apiKey).interactions.create({
-            model: "gemini-3.5-flash",
+            model,
             input: prompt,
             stream: true
         });
@@ -89,4 +100,4 @@ async function askGeminiWithStreaming(req, res, apiKey) {
     }
 }
 
-module.exports = { initializeCallToAPI, askGemini, askGeminiWithStreaming, getGeminiErrorMessage }
+module.exports = { initializeCallToAPI, askGemini, askGeminiWithStreaming, listGeminiModels, getGeminiErrorMessage }

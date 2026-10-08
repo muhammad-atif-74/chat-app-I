@@ -4,7 +4,7 @@ dotEnv.config()
 
 const express = require('express')
 const cors = require('cors')
-const { initializeCallToAPI, askGemini, askGeminiWithStreaming, getGeminiErrorMessage } = require('./src/config/gemini')
+const { initializeCallToAPI, askGemini, askGeminiWithStreaming, listGeminiModels, getGeminiErrorMessage } = require('./src/config/gemini')
 const authRoutes = require('./src/routes/auth')
 const settingsRoutes = require('./src/routes/settings')
 const chatsRoutes = require('./src/routes/chats')
@@ -63,6 +63,17 @@ app.post('/ask-stream', requireAuth, async (req, res) => {
         return askGeminiWithStreaming(req, res, apiKey)
     } catch (error) {
         res.status(500).json({ error: 'Unable to load user settings' })
+    }
+})
+
+app.get('/models', requireAuth, async (req, res) => {
+    try {
+        const apiKey = await getUserApiKey(req.user.uid)
+        if (!apiKey) return res.status(400).json({ error: 'Add your Gemini API key in settings first' })
+        res.json({ models: await listGeminiModels(apiKey) })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Unable to fetch Gemini models' })
     }
 })
 
