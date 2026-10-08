@@ -4,7 +4,7 @@ import { FormattedResponse } from "@/components/formatted-response";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addChatMessage, createChat, getChatMessages, getChats, type ChatRecord } from "@/lib/auth-client";
+import { addChatMessage, createChat, getChatMessages, getChats, getSession, type ChatRecord } from "@/lib/auth-client";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("")
@@ -84,7 +84,7 @@ export default function Home() {
       router.replace(`/?chat=${chatId}`)
       const response = await fetch("/api/ask-stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getSession()?.idToken || ""}` },
         body: JSON.stringify({ prompt: normalizedPrompt }),
       })
       if (!response.ok || !response.body) throw new Error("Failed to start response stream")

@@ -3,7 +3,13 @@ const dotEnv = require('dotenv')
 dotEnv.config()
 
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const clients = new Map();
+
+function getGeminiClient(apiKey = process.env.GEMINI_API_KEY) {
+    if (!apiKey) throw new Error("No Gemini API key configured");
+    if (!clients.has(apiKey)) clients.set(apiKey, new GoogleGenAI({ apiKey }));
+    return clients.get(apiKey);
+}
 
 function getGeminiErrorMessage(error) {
     if (error?.statusCode === 429 || error?.status === 429) {
@@ -20,7 +26,7 @@ async function initializeCallToAPI() {
     try {
         console.log("calling: ", process.env.GEMINI_API_KEY)
 
-        const interaction = await ai.interactions.create({
+        const interaction = await getGeminiClient().interactions.create({
             model: "gemini-3.6-flash",
             input: "When did pakistan came into being and who took great part in it. Concise.",
             stream: true
@@ -32,9 +38,9 @@ async function initializeCallToAPI() {
     }
 }
 
-async function askGemini(prompt) {
+async function askGemini(prompt, apiKey) {
     try {
-        const interaction = await ai.interactions.create({
+        const interaction = await getGeminiClient(apiKey).interactions.create({
             model: "gemini-3.6-flash",
             input: prompt,
             stream: false
@@ -46,19 +52,18 @@ async function askGemini(prompt) {
 }
 
 
-async function askGeminiWithStreaming(req, res) {
+async function askGeminiWithStreaming(req, res, apiKey) {
     try {
         console.log("Streaming api called. with req: ", req.body)
         const { prompt } = req.body;
         if (!prompt) return res.status(400).json({ error: "Prompt is required" });
-        console.log("prompt: ", prompt)
+        console.log("prompt: ", prompt, " key: ", apiKey)
 
         res.setHeader("Content-Type", "text/event-stream");
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
 
-        const stream = await ai.interactions.create({
-            model: "gemini-3.6-flash",
+        const stream = await getGeminiClient(apiKey).interactions.create({
             model: "gemini-3.5-flash",
             input: prompt,
             stream: true

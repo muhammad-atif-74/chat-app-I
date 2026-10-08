@@ -8,6 +8,8 @@ const { initializeCallToAPI, askGemini, askGeminiWithStreaming, getGeminiErrorMe
 const authRoutes = require('./src/routes/auth')
 const settingsRoutes = require('./src/routes/settings')
 const chatsRoutes = require('./src/routes/chats')
+const { db } = require('./src/config/firebase-admin')
+const { requireAuth } = require('./src/middleware/require-auth')
 
 const app = express()
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
@@ -34,12 +36,19 @@ app.get("/", (req, res) => {
     res.send("Hello")
 })
 
-app.post('/ask', async (req, res) => {
+async function getUserApiKey(userId) {
+    const settings = await db.collection('settings').doc(userId).get()
+    return settings.exists && typeof settings.data().api_key === 'string' ? settings.data().api_key.trim() : ''
+}
+
+app.post('/ask', requireAuth, async (req, res) => {
     const prompt = typeof req.body?.prompt === "string" ? req.body.prompt.trim() : "";
     if (!prompt) return res.status(400).json({ error: "Prompt is required" });
     
     try {
-        const answer = await askGemini(prompt);
+        const apiKey = await getUserApiKey(req.user.uid)
+        if (!apiKey) return res.status(400).json({ error: 'Add your Gemini API key in settings first' })
+        const answer = await askGemini(prompt, apiKey);
         res.json({ answer: answer?.trim() || "" });
     } catch (err) {
         console.error(err);
@@ -47,7 +56,15 @@ app.post('/ask', async (req, res) => {
     }
 })
 
-app.post('/ask-stream', askGeminiWithStreaming)
+app.post('/ask-stream', requireAuth, async (req, res) => {
+    try {
+        const apiKey = await getUserApiKey(req.user.uid)
+        if (!apiKey) return res.status(400).json({ error: 'Add your Gemini API key in settings first' })
+        return askGeminiWithStreaming(req, res, apiKey)
+    } catch (error) {
+        res.status(500).json({ error: 'Unable to load user settings' })
+    }
+})
 
 app.get('/send-stream', async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');

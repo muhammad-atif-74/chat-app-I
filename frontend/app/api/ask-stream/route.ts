@@ -5,7 +5,10 @@ export async function POST(request: NextRequest) {
     const backendUrl = (process.env.API_URL || "http://localhost:8080").replace(/\/+$/, "")
     const response = await fetch(`${backendUrl}/ask-stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(request.headers.get("authorization") ? { Authorization: request.headers.get("authorization")! } : {}),
+      },
       body: JSON.stringify(await request.json()),
       cache: "no-store",
     })
