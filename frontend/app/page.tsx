@@ -4,10 +4,15 @@ import { FormattedResponse } from "@/components/formatted-response";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { addChatMessage, createChat, getChatMessages, getChats, type ChatRecord } from "@/lib/auth-client";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("")
   const [messages, setMessages] = useState<{ prompt: string; response: string }[]>([])
+  const [recentChats, setRecentChats] = useState<ChatRecord[]>([])
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [loadingChats, setLoadingChats] = useState(false)
+  const [loadingMessages, setLoadingMessages] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [streamStarted, setStreamStarted] = useState(false)
@@ -21,6 +26,35 @@ export default function Home() {
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login")
   }, [authLoading, user, router])
+
+  useEffect(() => {
+    if (!user) return
+    const timer = window.setTimeout(() => {
+      setLoadingChats(true)
+      getChats().then(setRecentChats).catch(() => setRecentChats([])).finally(() => setLoadingChats(false))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    const timer = window.setTimeout(() => {
+      const chatId = new URLSearchParams(window.location.search).get("chat")
+      if (!chatId) {
+        setSelectedChatId(null)
+        setMessages([])
+        return
+      }
+
+      setSelectedChatId(chatId)
+      setLoadingMessages(true)
+      getChatMessages(chatId)
+        .then((loaded) => setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))))
+        .catch(() => { setSelectedChatId(null); setMessages([]); router.replace("/") })
+        .finally(() => setLoadingMessages(false))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [user, router])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -45,6 +79,9 @@ export default function Home() {
     if (promptInputRef.current) promptInputRef.current.style.height = "44px"
     setMessages((current) => [...current, { prompt: normalizedPrompt, response: "" }])
     try {
+      const chatId = selectedChatId || (await createChat(normalizedPrompt.replace(/\s+/g, " ").slice(0, 60) || "New chat")).id
+      setSelectedChatId(chatId)
+      router.replace(`/?chat=${chatId}`)
       const response = await fetch("/api/ask-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,6 +137,8 @@ export default function Home() {
       updateResponse("", true)
       if (!streamedResponse) throw new Error("The AI returned an empty response")
       setMessages((current) => current.map((message, index) => index === current.length - 1 ? { ...message, response: streamedResponse } : message))
+      await addChatMessage(chatId, normalizedPrompt, streamedResponse)
+      getChats().then(setRecentChats).catch(() => undefined)
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : "Failed to get response"
       let message = rawMessage
@@ -123,17 +162,19 @@ export default function Home() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-zinc-950">C</div>
             <span className="font-semibold tracking-tight">Customized GPT</span>
           </div>
-          <button type="button" className="mt-6 flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setMessages([]); setError("") }}>
+          <button type="button" className="mt-6 flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}>
             + New chat
           </button>
           <div className="mt-7 flex-1">
             <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Recent chats</p>
             <div className="mt-3 space-y-1">
-              {["Writing practice", "Product ideas", "Travel planning"].map((chat, index) => (
-                <button type="button" key={chat} className={`w-full truncate rounded-lg px-3 py-2.5 text-left text-sm transition ${index === 0 ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`}>
-                  {chat}
+              {loadingChats && <div className="flex justify-center px-3 py-3"><span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-transparent" aria-label="Loading chats" /></div>}
+              {!loadingChats && recentChats.map((chat) => (
+                <button type="button" key={chat.id} onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }} className={`w-full truncate rounded-lg px-3 py-2.5 text-left text-sm transition ${selectedChatId === chat.id ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`}>
+                  {chat.title}
                 </button>
               ))}
+              {!loadingChats && !recentChats.length && <p className="px-3 py-2 text-xs text-zinc-600">No saved chats yet.</p>}
             </div>
           </div>
           <div className="space-y-1 border-t border-zinc-800 pt-3">
@@ -156,6 +197,11 @@ export default function Home() {
           </header>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-zinc-50/70 px-4 py-6 sm:px-28">
+          {loadingMessages ? (
+            <div className="flex h-full items-center justify-center">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" aria-label="Loading messages" />
+            </div>
+          ) : <>
           {!settingsLoading && !hasSettings && (
             <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <span>Add your API key in settings to finish setup.</span>
@@ -197,7 +243,8 @@ export default function Home() {
             {!messages.length && !error && (
               <div className="flex h-full items-center justify-center text-sm text-zinc-400">Start a conversation</div>
             )}
-            <div ref={messagesEndRef} />
+          </>}
+          <div ref={messagesEndRef} />
           </div>
 
           <form className="shrink-0 border-t border-zinc-100 bg-white p-4 sm:p-5 sm:px-28" onSubmit={handleAskAI}>

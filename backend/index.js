@@ -7,6 +7,7 @@ const cors = require('cors')
 const { initializeCallToAPI, askGemini, askGeminiWithStreaming, getGeminiErrorMessage } = require('./src/config/gemini')
 const authRoutes = require('./src/routes/auth')
 const settingsRoutes = require('./src/routes/settings')
+const chatsRoutes = require('./src/routes/chats')
 
 const app = express()
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
@@ -26,6 +27,7 @@ app.options(/.*/, cors())
 app.use(express.json())
 app.use('/auth', authRoutes)
 app.use('/settings', settingsRoutes)
+app.use('/chats', chatsRoutes)
 
 app.get("/", (req, res) => {
     console.log("API CALLED")
