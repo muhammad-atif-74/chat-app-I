@@ -52,13 +52,22 @@ async function askGemini(prompt, apiKey) {
 }
 
 async function listGeminiModels(apiKey) {
-    const models = [];
+    const excludedKeywords = [
+        'tts', 'image', 'banana', 'embedding', 'transcribe',
+        'robotics', 'computer-use', 'lyria', 'veo', 'clip',
+        'omni', 'antigravity', 'deep-research', 'aqa'
+    ];
+    const tiers = { budget: [], balanced: [], higher: [] };
     const pager = await getGeminiClient(apiKey).models.list();
     for await (const model of pager) {
-        if (model.name) models.push({ id: model.name.replace(/^models\//, ""), name: model.displayName || model.name });
+        const id = model.name?.replace(/^models\//, "").toLowerCase();
+        if (!id || excludedKeywords.some((keyword) => id.includes(keyword))) continue;
+        const item = { id, name: model.displayName || id };
+        if (id.includes('lite')) tiers.budget.push({ ...item, tier: 'Budget', badge: 'Lowest Cost / Ultra-Fast' });
+        else if (id.includes('pro') || id.includes('gemma')) tiers.higher.push({ ...item, tier: 'Higher', badge: 'Deep Reasoning / Complex Logic' });
+        else if (id.includes('flash')) tiers.balanced.push({ ...item, tier: 'Balanced', badge: 'Best All-Around Value' });
     }
-    console.log("MODALS FOUND: ", models)
-    return models;
+    return tiers;
 }
 
 

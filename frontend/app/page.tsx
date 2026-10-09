@@ -4,7 +4,7 @@ import { FormattedResponse } from "@/components/formatted-response";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModel } from "@/lib/auth-client";
+import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModelTiers } from "@/lib/auth-client";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("")
@@ -13,7 +13,8 @@ export default function Home() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [loadingChats, setLoadingChats] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [models, setModels] = useState<GeminiModel[]>([])
+  const [modelTiers, setModelTiers] = useState<GeminiModelTiers>({ budget: [], balanced: [], higher: [] })
+  const [selectedTier, setSelectedTier] = useState<keyof GeminiModelTiers>("balanced")
   const [selectedModel, setSelectedModel] = useState("gemini-3.6-flash")
   const [loadingModels, setLoadingModels] = useState(false)
   const [error, setError] = useState("")
@@ -43,10 +44,17 @@ export default function Home() {
     if (!hasSettings) return
     const timer = window.setTimeout(() => {
       setLoadingModels(true)
-      getGeminiModels().then(setModels).catch(() => setModels([])).finally(() => setLoadingModels(false))
+      getGeminiModels().then((tiers) => {
+        setModelTiers(tiers)
+        const defaultModel = tiers.balanced.find((model) => model.id === "gemini-3.6-flash")
+        const firstModel = defaultModel || tiers.balanced[0] || tiers.budget[0] || tiers.higher[0]
+        if (firstModel) setSelectedModel(firstModel.id)
+      }).catch(() => setModelTiers({ budget: [], balanced: [], higher: [] })).finally(() => setLoadingModels(false))
     }, 0)
     return () => window.clearTimeout(timer)
   }, [hasSettings])
+
+  const availableModels = modelTiers[selectedTier]
 
   useEffect(() => {
     if (!user) return
@@ -171,8 +179,8 @@ export default function Home() {
       <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden bg-white">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-zinc-950 p-4 text-zinc-300 md:flex">
           <div className="flex items-center gap-2 px-2 py-2 text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-zinc-950">C</div>
-            <span className="font-semibold tracking-tight">Customized GPT</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-zinc-950">M</div>
+            <span className="font-semibold tracking-tight">MY AI</span>
           </div>
           <button type="button" className="mt-6 flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}>
             + New chat
@@ -279,9 +287,14 @@ export default function Home() {
                   }
                 }}
               />
-              <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)} disabled={loadingModels} className="h-10 max-w-36 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
-                {!models.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "Default model"}</option>}
-                {models.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
+              <select value={selectedTier} onChange={(event) => { const tier = event.target.value as keyof GeminiModelTiers; setSelectedTier(tier); setSelectedModel(modelTiers[tier][0]?.id || "gemini-3.6-flash") }} disabled={loadingModels} className="h-10 max-w-28 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
+                <option value="budget">Budget</option>
+                <option value="balanced">Balanced</option>
+                <option value="higher">Higher</option>
+              </select>
+              <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)} disabled={loadingModels || !availableModels.length} className="h-10 max-w-40 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
+                {!availableModels.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "No models"}</option>}
+                {availableModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
               </select>
               <button disabled={isLoading || !prompt.trim()} className="h-10 shrink-0 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300">
                 {isLoading ? "..." : "Send"}
