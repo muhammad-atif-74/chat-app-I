@@ -80,7 +80,7 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  if (authLoading || !user) return <div className="flex min-h-screen items-center justify-center text-sm text-zinc-500">Loading...</div>
+  if (authLoading || !user) return <div className="flex min-h-screen items-center justify-center bg-zinc-950"><span className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-700 border-t-white" aria-label="Loading" /></div>
 
   const handleCopy = async (response: string, index: number) => {
     await navigator.clipboard.writeText(response)
@@ -174,23 +174,24 @@ export default function Home() {
       setStreamStarted(false)
     }
   }
+  const activeChatTitle = recentChats.find((chat) => chat.id === selectedChatId)?.title || "New conversation"
   return (
-    <section className="min-h-[100dvh] bg-[#f4f5f7] text-zinc-900">
+    <section className="min-h-[100dvh] bg-zinc-100 text-zinc-900">
       <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden bg-white">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-zinc-950 p-4 text-zinc-300 md:flex">
-          <div className="flex items-center gap-2 px-2 py-2 text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-zinc-950">M</div>
-            <span className="font-semibold tracking-tight">MY AI</span>
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 text-zinc-300 md:flex">
+          <div className="flex items-center gap-3 px-2 py-2 text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-sm font-bold text-zinc-950 shadow-sm">M</div>
+            <div><p className="font-semibold tracking-tight">MY AI</p><p className="text-[11px] text-zinc-500">Personal workspace</p></div>
           </div>
-          <button type="button" className="mt-6 flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}>
-            + New chat
+          <button type="button" className="mt-7 flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}>
+            <span className="text-lg leading-none">+</span> New chat
           </button>
-          <div className="mt-7 flex-1">
-            <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Recent chats</p>
+          <div className="mt-8 flex-1 overflow-y-auto">
+            <div className="flex items-center justify-between px-2"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Recent chats</p><span className="text-[11px] text-zinc-600">{recentChats.length || ""}</span></div>
             <div className="mt-3 space-y-1">
               {loadingChats && <div className="flex justify-center px-3 py-3"><span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-transparent" aria-label="Loading chats" /></div>}
               {!loadingChats && recentChats.map((chat) => (
-                <button type="button" key={chat.id} onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }} className={`w-full truncate rounded-lg px-3 py-2.5 text-left text-sm transition ${selectedChatId === chat.id ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`}>
+                <button type="button" key={chat.id} onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }} className={`w-full truncate rounded-xl border px-3 py-2.5 text-left text-sm transition ${selectedChatId === chat.id ? "border-zinc-700 bg-zinc-800 text-white" : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`}>
                   {chat.title}
                 </button>
               ))}
@@ -198,25 +199,26 @@ export default function Home() {
             </div>
           </div>
           <div className="space-y-1 border-t border-zinc-800 pt-3">
+            <p className="truncate px-3 pb-2 text-xs text-zinc-600">{user.email}</p>
             <Link href={"/settings"}>
-              <button type="button" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white">⚙ Settings</button>
+              <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"><span className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-xs">+</span>Settings</button>
             </Link>
             <Link href={"/login"}>
-            <button type="button" onClick={() => { logout(); router.replace("/login") }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white">↪ Log out</button>
+            <button type="button" onClick={() => { logout(); router.replace("/login") }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"><span className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-xs">&rarr;</span>Log out</button>
             </Link>
           </div>
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-4 sm:px-28">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">AI assistant</p>
-              <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-950">New conversation</h1>
+          <header className="flex min-h-[73px] items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 sm:px-28">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Workspace</p>
+              <h1 className="mt-1 truncate text-lg font-semibold tracking-tight text-zinc-950">{activeChatTitle}</h1>
             </div>
-            <div className="hidden items-center gap-2 text-xs text-zinc-400 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" />Ready</div>
+            <div className="ml-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600">{(user.name || user.email || "U").slice(0, 1).toUpperCase()}</div>
           </header>
 
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-zinc-50/70 px-4 py-6 sm:px-28">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-zinc-50/70 px-4 py-7 sm:px-28">
           {loadingMessages ? (
             <div className="flex h-full items-center justify-center">
               <span className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" aria-label="Loading messages" />
@@ -231,13 +233,11 @@ export default function Home() {
             {messages.map((message, index) => (
               <div className="space-y-2" key={`${message.prompt}-${index}`}>
                 <div className="flex justify-end">
-                  <p className="max-w-[88%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-3 text-sm leading-6 text-white shadow-sm whitespace-pre-wrap sm:max-w-[70%]">
-                    {message.prompt}
-                  </p>
+                  <p className="max-w-[88%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-3 text-sm leading-6 text-white shadow-sm whitespace-pre-wrap sm:max-w-[70%]">{message.prompt}</p>
                 </div>
                 {message.response && (
                   <div className="flex justify-start">
-                    <div key={`${message.prompt}-${index}-${index === messages.length - 1 ? streamVersion : 0}`} className="animate-stream-chunk group relative max-w-[88%] rounded-2xl rounded-bl-md border border-zinc-200 bg-white px-4 py-3 pb-10 text-sm leading-6 text-zinc-700 shadow-sm sm:max-w-[70%]">
+                    <div key={`${message.prompt}-${index}-${index === messages.length - 1 ? streamVersion : 0}`} className="animate-stream-chunk group relative max-w-[88%] rounded-2xl rounded-bl-md border border-zinc-200/80 bg-white px-5 py-4 pb-11 text-sm leading-6 text-zinc-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] sm:max-w-[70%]">
                       <FormattedResponse content={message.response} />
                       <button
                         type="button"
@@ -271,14 +271,21 @@ export default function Home() {
               </div>
             )}
             {!messages.length && !error && (
-              <div className="flex h-full items-center justify-center text-sm text-zinc-400">Start a conversation</div>
+              <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-xl font-semibold text-white shadow-lg shadow-zinc-200">M</div>
+                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">What can I help with?</h2>
+                <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">Ask a question, explore an idea, or start something new.</p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {["Explain a concept", "Help me write", "Brainstorm ideas"].map((suggestion) => <button key={suggestion} type="button" onClick={() => { setPrompt(suggestion); promptInputRef.current?.focus() }} className="rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-xs text-zinc-600 shadow-sm transition hover:border-zinc-400 hover:text-zinc-900">{suggestion}</button>)}
+                </div>
+              </div>
             )}
           </>}
           <div ref={messagesEndRef} />
           </div>
 
           <form className="shrink-0 border-t border-zinc-100 bg-white p-4 sm:p-5 sm:px-28" onSubmit={handleAskAI}>
-            <div className="flex items-end gap-2 rounded-xl border border-zinc-300 bg-zinc-50 p-2 transition focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-100">
+            <div className="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-2 shadow-sm transition focus-within:border-zinc-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-zinc-100">
               <textarea
                 ref={promptInputRef}
                 className="max-h-32 min-h-11 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2 text-sm leading-5 text-zinc-900 outline-none placeholder:text-zinc-400"
@@ -306,7 +313,7 @@ export default function Home() {
                 {!availableModels.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "No models"}</option>}
                 {availableModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
               </select>
-              <button disabled={isLoading || !prompt.trim()} className="h-10 shrink-0 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300">
+              <button disabled={isLoading || !prompt.trim()} className="h-10 shrink-0 rounded-xl bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300">
                 {isLoading ? "..." : "Send"}
               </button>
             </div>
