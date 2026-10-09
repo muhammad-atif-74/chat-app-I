@@ -6,6 +6,57 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModelTiers } from "@/lib/auth-client";
 
+/* ---------- Presentation helpers (no app logic) ---------- */
+
+const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/60"
+
+const iconProps = {
+  "aria-hidden": true,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const
+
+function PlusIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return <svg {...iconProps} className={className}><path d="M12 5v14M5 12h14" /></svg>
+}
+function SlidersIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M3 6h9M16 6h5M3 12h3M10 12h11M3 18h11M18 18h3" />
+      <circle cx="14" cy="6" r="2" /><circle cx="8" cy="12" r="2" /><circle cx="16" cy="18" r="2" />
+    </svg>
+  )
+}
+function LogoutIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return <svg {...iconProps} className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+}
+function CopyIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <rect width="13" height="13" x="8" y="8" rx="2" />
+      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+    </svg>
+  )
+}
+function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return <svg {...iconProps} className={className}><path d="m5 12 4 4L19 6" /></svg>
+}
+function ArrowUpIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return <svg {...iconProps} className={className}><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+}
+function Spinner({ className = "h-4 w-4", label }: { className?: string; label?: string }) {
+  return <span role={label ? "status" : undefined} aria-label={label} className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />
+}
+function Avatar({ letter, className = "" }: { letter: string; className?: string }) {
+  return <div className={`flex shrink-0 items-center justify-center rounded-full bg-slate-200 font-semibold text-slate-700 ${className}`}>{letter}</div>
+}
+
+/* ---------- Page ---------- */
+
 export default function Home() {
   const [prompt, setPrompt] = useState("")
   const [messages, setMessages] = useState<{ prompt: string; response: string }[]>([])
@@ -80,7 +131,7 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  if (authLoading || !user) return <div className="flex min-h-screen items-center justify-center bg-zinc-950"><span className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-700 border-t-white" aria-label="Loading" /></div>
+  if (authLoading || !user) return <div className="flex min-h-screen items-center justify-center bg-white"><Spinner className="h-6 w-6 text-teal-700" label="Loading" /></div>
 
   const handleCopy = async (response: string, index: number) => {
     await navigator.clipboard.writeText(response)
@@ -175,149 +226,217 @@ export default function Home() {
     }
   }
   const activeChatTitle = recentChats.find((chat) => chat.id === selectedChatId)?.title || "New conversation"
+  const userInitial = (user.name || user.email || "U").slice(0, 1).toUpperCase()
+
   return (
-    <section className="min-h-[100dvh] bg-zinc-100 text-zinc-900">
-      <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden bg-white">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 text-zinc-300 md:flex">
-          <div className="flex items-center gap-3 px-2 py-2 text-white">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-sm font-bold text-zinc-950 shadow-sm">M</div>
-            <div><p className="font-semibold tracking-tight">MY AI</p><p className="text-[11px] text-zinc-500">Personal workspace</p></div>
+    <section className="min-h-[100dvh] bg-white text-slate-900 antialiased">
+      <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden">
+        {/* ---------- Sidebar ---------- */}
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50 md:flex">
+          <div className="flex items-center gap-3 px-5 pb-4 pt-5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold text-white shadow-sm">M</div>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold tracking-tight text-slate-900">MY AI</p>
+              <p className="text-xs text-slate-500">Personal workspace</p>
+            </div>
           </div>
-          <button type="button" className="mt-7 flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200" onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}>
-            <span className="text-lg leading-none">+</span> New chat
-          </button>
-          <div className="mt-8 flex-1 overflow-y-auto">
-            <div className="flex items-center justify-between px-2"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Recent chats</p><span className="text-[11px] text-zinc-600">{recentChats.length || ""}</span></div>
-            <div className="mt-3 space-y-1">
-              {loadingChats && <div className="flex justify-center px-3 py-3"><span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-transparent" aria-label="Loading chats" /></div>}
+
+          <div className="px-3">
+            <button
+              type="button"
+              className={`flex h-10 w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 ${focusRing}`}
+              onClick={() => { setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }}
+            >
+              <PlusIcon className="h-4 w-4 text-teal-700" /> New chat
+            </button>
+          </div>
+
+          <nav className="mt-6 min-h-0 flex-1 overflow-y-auto px-3" aria-label="Recent chats">
+            <div className="flex items-center justify-between px-2">
+              <p className="text-xs font-medium text-slate-500">Recent chats</p>
+              <span className="text-xs tabular-nums text-slate-400">{recentChats.length || ""}</span>
+            </div>
+            <div className="mt-2 space-y-0.5">
+              {loadingChats && <div className="flex justify-center px-3 py-4"><Spinner className="h-4 w-4 text-slate-400" label="Loading chats" /></div>}
               {!loadingChats && recentChats.map((chat) => (
-                <button type="button" key={chat.id} onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }} className={`w-full truncate rounded-xl border px-3 py-2.5 text-left text-sm transition ${selectedChatId === chat.id ? "border-zinc-700 bg-zinc-800 text-white" : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`}>
+                <button
+                  type="button"
+                  key={chat.id}
+                  aria-current={selectedChatId === chat.id ? "page" : undefined}
+                  onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }}
+                  className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm transition ${focusRing} ${selectedChatId === chat.id ? "bg-white font-medium text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-slate-200/60 hover:text-slate-900"}`}
+                >
                   {chat.title}
                 </button>
               ))}
-              {!loadingChats && !recentChats.length && <p className="px-3 py-2 text-xs text-zinc-600">No saved chats yet.</p>}
+              {!loadingChats && !recentChats.length && <p className="px-3 py-2 text-sm text-slate-500">No saved chats yet.</p>}
             </div>
-          </div>
-          <div className="space-y-1 border-t border-zinc-800 pt-3">
-            <p className="truncate px-3 pb-2 text-xs text-zinc-600">{user.email}</p>
-            <Link href={"/settings"}>
-              <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"><span className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-xs">+</span>Settings</button>
-            </Link>
-            <Link href={"/login"}>
-            <button type="button" onClick={() => { logout(); router.replace("/login") }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"><span className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-xs">&rarr;</span>Log out</button>
-            </Link>
+          </nav>
+
+          <div className="border-t border-slate-200 p-3">
+            <div className="flex items-center gap-3 px-2 pb-3 pt-1">
+              <Avatar letter={userInitial} className="h-8 w-8 text-xs" />
+              <p className="min-w-0 truncate text-sm text-slate-600" title={user.email}>{user.email}</p>
+            </div>
+            <div className="space-y-0.5">
+              <Link href="/settings" className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 ${focusRing}`}>
+                <SlidersIcon className="h-4 w-4 text-slate-400" />Settings
+              </Link>
+              <button type="button" onClick={() => { logout(); router.replace("/login") }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 ${focusRing}`}>
+                <LogoutIcon className="h-4 w-4 text-slate-400" />Log out
+              </button>
+            </div>
           </div>
         </aside>
 
-        <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex min-h-[73px] items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 sm:px-28">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Workspace</p>
-              <h1 className="mt-1 truncate text-lg font-semibold tracking-tight text-zinc-950">{activeChatTitle}</h1>
+        {/* ---------- Main ---------- */}
+        <main className="flex min-w-0 flex-1 flex-col bg-white">
+          <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-semibold text-white md:hidden">M</div>
+              <h1 className="truncate text-sm font-semibold tracking-tight text-slate-900">{activeChatTitle}</h1>
             </div>
-            <div className="ml-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600">{(user.name || user.email || "U").slice(0, 1).toUpperCase()}</div>
+            <Avatar letter={userInitial} className="h-8 w-8 text-xs" />
           </header>
 
-          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-zinc-50/70 px-4 py-7 sm:px-28">
-          {loadingMessages ? (
-            <div className="flex h-full items-center justify-center">
-              <span className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" aria-label="Loading messages" />
-            </div>
-          ) : <>
-          {!settingsLoading && !hasSettings && (
-            <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <span>Add your API key in settings to finish setup.</span>
-              <Link href="/settings" className="shrink-0 font-semibold underline underline-offset-4">Open settings</Link>
-            </div>
-          )}
-            {messages.map((message, index) => (
-              <div className="space-y-2" key={`${message.prompt}-${index}`}>
-                <div className="flex justify-end">
-                  <p className="max-w-[88%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-3 text-sm leading-6 text-white shadow-sm whitespace-pre-wrap sm:max-w-[70%]">{message.prompt}</p>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
+              {loadingMessages ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner className="h-6 w-6 text-slate-400" label="Loading messages" />
                 </div>
-                {message.response && (
-                  <div className="flex justify-start">
-                    <div key={`${message.prompt}-${index}-${index === messages.length - 1 ? streamVersion : 0}`} className="animate-stream-chunk group relative max-w-[88%] rounded-2xl rounded-bl-md border border-zinc-200/80 bg-white px-5 py-4 pb-11 text-sm leading-6 text-zinc-700 shadow-[0_2px_8px_rgba(0,0,0,0.04)] sm:max-w-[70%]">
-                      <FormattedResponse content={message.response} />
-                      <button
-                        type="button"
-                        aria-label={copiedIndex === index ? "Response copied" : "Copy response"}
-                        title={copiedIndex === index ? "Response copied" : "Copy response"}
-                        className="absolute bottom-2 right-3 rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
-                        onClick={() => handleCopy(message.response, index)}
-                      >
-                        {copiedIndex === index ? (
-                          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="m5 12 4 4L19 6" />
-                          </svg>
-                        ) : (
-                          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect width="13" height="13" x="8" y="8" rx="2" />
-                            <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
-                          </svg>
-                        )}
-                      </button>
+              ) : <>
+                {!settingsLoading && !hasSettings && (
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <span>Add your API key in settings to finish setup.</span>
+                    <Link href="/settings" className={`shrink-0 rounded font-semibold underline underline-offset-4 ${focusRing}`}>Open settings</Link>
+                  </div>
+                )}
+
+                {messages.map((message, index) => (
+                  <div className="space-y-6" key={`${message.prompt}-${index}`}>
+                    <div className="flex justify-end">
+                      <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-slate-100 px-4 py-2.5 text-[15px] leading-6 text-slate-900 sm:max-w-[75%]">{message.prompt}</p>
+                    </div>
+                    {message.response && (
+                      <div className="flex gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-semibold text-white">M</div>
+                        <div className="min-w-0 flex-1">
+                          <div key={`${message.prompt}-${index}-${index === messages.length - 1 ? streamVersion : 0}`} className="animate-stream-chunk text-[15px] leading-7 text-slate-800">
+                            <FormattedResponse content={message.response} />
+                          </div>
+                          <div className="mt-2 flex items-center">
+                            <button
+                              type="button"
+                              aria-label={copiedIndex === index ? "Response copied" : "Copy response"}
+                              title={copiedIndex === index ? "Response copied" : "Copy response"}
+                              className={`-ml-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition hover:bg-slate-100 ${focusRing} ${copiedIndex === index ? "text-teal-700" : "text-slate-400 hover:text-slate-700"}`}
+                              onClick={() => handleCopy(message.response, index)}
+                            >
+                              {copiedIndex === index ? <CheckIcon /> : <CopyIcon />}
+                              {copiedIndex === index ? "Copied" : "Copy"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+
+                {isLoading && !streamStarted && (
+                  <div className="flex items-center gap-3" aria-label="Waiting for response">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-semibold text-white">M</div>
+                    <div className="flex items-center gap-1 text-slate-400">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
                     </div>
                   </div>
                 )}
-              </div>
-            ))}
-            {error ? <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
-            {isLoading && !streamStarted && (
-              <div className="flex items-center gap-1 px-2 py-2 text-zinc-400" aria-label="Waiting for response">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
-              </div>
-            )}
-            {!messages.length && !error && (
-              <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-xl font-semibold text-white shadow-lg shadow-zinc-200">M</div>
-                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">What can I help with?</h2>
-                <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">Ask a question, explore an idea, or start something new.</p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {["Explain a concept", "Help me write", "Brainstorm ideas"].map((suggestion) => <button key={suggestion} type="button" onClick={() => { setPrompt(suggestion); promptInputRef.current?.focus() }} className="rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-xs text-zinc-600 shadow-sm transition hover:border-zinc-400 hover:text-zinc-900">{suggestion}</button>)}
-                </div>
-              </div>
-            )}
-          </>}
-          <div ref={messagesEndRef} />
+
+                {!messages.length && !error && (
+                  <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-700 text-lg font-semibold text-white shadow-sm">M</div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-slate-900">What can I help with?</h2>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">Ask a question, explore an idea, or start something new.</p>
+                    <div className="mt-7 flex flex-wrap justify-center gap-2">
+                      {["Explain a concept", "Help me write", "Brainstorm ideas"].map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => { setPrompt(suggestion); promptInputRef.current?.focus() }}
+                          className={`rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-teal-600/40 hover:bg-teal-50 hover:text-teal-800 ${focusRing}`}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>}
+            </div>
+            <div ref={messagesEndRef} />
           </div>
 
-          <form className="shrink-0 border-t border-zinc-100 bg-white p-4 sm:p-5 sm:px-28" onSubmit={handleAskAI}>
-            <div className="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-2 shadow-sm transition focus-within:border-zinc-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-zinc-100">
-              <textarea
-                ref={promptInputRef}
-                className="max-h-32 min-h-11 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2 text-sm leading-5 text-zinc-900 outline-none placeholder:text-zinc-400"
-                placeholder="Ask anything..."
-                rows={1}
-                onChange={(e) => {
-                  e.currentTarget.style.height = "auto"
-                  e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 128)}px`
-                  setPrompt(e.target.value)
-                }}
-                value={prompt}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault()
-                    e.currentTarget.form?.requestSubmit()
-                  }
-                }}
-              />
-              <select value={selectedTier} onChange={(event) => { const tier = event.target.value as keyof GeminiModelTiers; setSelectedTier(tier); setSelectedModel(modelTiers[tier][0]?.id || "gemini-3.6-flash") }} disabled={loadingModels} className="h-10 max-w-28 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
-                <option value="budget">Budget</option>
-                <option value="balanced">Balanced</option>
-                <option value="higher">Higher</option>
-              </select>
-              <select value={selectedModel} onChange={(event) => setSelectedModel(event.target.value)} disabled={loadingModels || !availableModels.length} className="h-10 max-w-40 shrink-0 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none disabled:opacity-50">
-                {!availableModels.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "No models"}</option>}
-                {availableModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
-              </select>
-              <button disabled={isLoading || !prompt.trim()} className="h-10 shrink-0 rounded-xl bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300">
-                {isLoading ? "..." : "Send"}
-              </button>
+          {/* ---------- Composer ---------- */}
+          <form className="shrink-0 px-4 pb-4 pt-2 sm:px-6 sm:pb-6" onSubmit={handleAskAI}>
+            <div className="mx-auto w-full max-w-3xl">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)] transition focus-within:border-teal-600/60 focus-within:ring-4 focus-within:ring-teal-600/10">
+                <textarea
+                  ref={promptInputRef}
+                  className="block max-h-32 min-h-11 w-full resize-none overflow-y-auto rounded-t-2xl bg-transparent px-4 py-2.5 text-[15px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
+                  placeholder="Ask anything..."
+                  rows={1}
+                  onChange={(e) => {
+                    e.currentTarget.style.height = "auto"
+                    e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 128)}px`
+                    setPrompt(e.target.value)
+                  }}
+                  value={prompt}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      e.currentTarget.form?.requestSubmit()
+                    }
+                  }}
+                />
+                <div className="flex items-center justify-between gap-3 px-2.5 pb-2.5 pt-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <select
+                      aria-label="Model tier"
+                      value={selectedTier}
+                      onChange={(event) => { const tier = event.target.value as keyof GeminiModelTiers; setSelectedTier(tier); setSelectedModel(modelTiers[tier][0]?.id || "gemini-3.6-flash") }}
+                      disabled={loadingModels}
+                      className={`h-8 max-w-28 shrink-0 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
+                    >
+                      <option value="budget">Budget</option>
+                      <option value="balanced">Balanced</option>
+                      <option value="higher">Higher</option>
+                    </select>
+                    <select
+                      aria-label="Model"
+                      value={selectedModel}
+                      onChange={(event) => setSelectedModel(event.target.value)}
+                      disabled={loadingModels || !availableModels.length}
+                      className={`h-8 min-w-0 max-w-40 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-56 ${focusRing}`}
+                    >
+                      {!availableModels.length && <option value="gemini-3.6-flash">{loadingModels ? "Loading..." : "No models"}</option>}
+                      {availableModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !prompt.trim()}
+                    className={`flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-teal-700 pl-4 pr-3 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none ${focusRing}`}
+                  >
+                    {isLoading ? <Spinner className="mr-1 h-4 w-4" label="Sending" /> : <>Send<ArrowUpIcon className="h-4 w-4" /></>}
+                  </button>
+                </div>
+              </div>
+              <p className="mt-2 text-center text-xs text-slate-400">Press Enter to send. Use Shift + Enter for a new line.</p>
             </div>
-            <p className="mt-2 text-center text-xs text-zinc-400">Press Enter to send · Shift + Enter for a new line</p>
           </form>
         </main>
       </div>
