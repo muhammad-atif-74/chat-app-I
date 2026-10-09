@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "no-cache, no-transform",
       },
     })
-  } catch {
+  } catch(err) {
+    console.log("ERROR ARISE: ", err)
     return new Response('data: {"error":"The AI service could not be reached. Please check that the backend is running."}\n\ndata: [DONE]\n\n', {
       status: 200,
       headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
