@@ -42,6 +42,8 @@ function CopyIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
     </svg>
   )
 }
+function MenuIcon({ className = "h-5 w-5" }: { className?: string }) { return <svg {...iconProps} className={className}><path d="M4 6h16M4 12h16M4 18h16" /></svg> }
+function CloseIcon({ className = "h-5 w-5" }: { className?: string }) { return <svg {...iconProps} className={className}><path d="m6 6 12 12M18 6 6 18" /></svg> }
 function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return <svg {...iconProps} className={className}><path d="m5 12 4 4L19 6" /></svg>
 }
@@ -73,6 +75,7 @@ export default function Home() {
   const [streamStarted, setStreamStarted] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [streamVersion, setStreamVersion] = useState(0)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const promptInputRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { user, loading: authLoading, settingsLoading, hasSettings, logout } = useAuth()
@@ -263,7 +266,7 @@ export default function Home() {
                   type="button"
                   key={chat.id}
                   aria-current={selectedChatId === chat.id ? "page" : undefined}
-                  onClick={async () => { router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }}
+                  onClick={async () => { setMobileNavOpen(false); router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }}
                   className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm transition ${focusRing} ${selectedChatId === chat.id ? "bg-white font-medium text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-slate-200/60 hover:text-slate-900"}`}
                 >
                   {chat.title}
@@ -279,7 +282,7 @@ export default function Home() {
               <p className="min-w-0 truncate text-sm text-slate-600" title={user.email}>{user.email}</p>
             </div>
             <div className="space-y-0.5">
-              <Link href="/settings" className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 ${focusRing}`}>
+              <Link href="/settings" onClick={() => setMobileNavOpen(false)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 ${focusRing}`}>
                 <SlidersIcon className="h-4 w-4 text-slate-400" />Settings
               </Link>
               <button type="button" onClick={() => { logout(); router.replace("/login") }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-200/60 hover:text-slate-900 ${focusRing}`}>
@@ -289,11 +292,19 @@ export default function Home() {
           </div>
         </aside>
 
+        {mobileNavOpen && <div className="fixed inset-0 z-40 bg-slate-950/20 md:hidden" onClick={() => setMobileNavOpen(false)} />}
+        <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(19rem,88vw)] flex-col border-r border-slate-200 bg-slate-50 shadow-xl transition-transform duration-200 md:hidden ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="flex items-center justify-between px-5 pb-4 pt-5"><div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold text-white">M</div><div><p className="text-sm font-semibold text-slate-900">MY AI</p><p className="text-xs text-slate-500">Personal workspace</p></div></div><button type="button" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} className={`rounded-lg p-2 text-slate-500 hover:bg-slate-200 ${focusRing}`}><CloseIcon /></button></div>
+          <div className="px-3"><button type="button" onClick={() => { setMobileNavOpen(false); setSelectedChatId(null); setMessages([]); setError(""); router.replace("/") }} className={`flex h-10 w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm ${focusRing}`}><PlusIcon className="h-4 w-4 text-teal-700" />New chat</button></div>
+          <nav className="mt-6 min-h-0 flex-1 overflow-y-auto px-3" aria-label="Recent chats"><p className="px-2 text-xs font-medium text-slate-500">Recent chats</p><div className="mt-2 space-y-0.5">{loadingChats ? <div className="flex justify-center py-4"><Spinner className="h-4 w-4 text-slate-400" label="Loading chats" /></div> : recentChats.map((chat) => <button type="button" key={chat.id} onClick={async () => { setMobileNavOpen(false); router.replace(`/?chat=${chat.id}`); setSelectedChatId(chat.id); setLoadingMessages(true); try { const loaded = await getChatMessages(chat.id); setMessages(loaded.map((message) => ({ prompt: message.req, response: message.res }))) } finally { setLoadingMessages(false) } }} className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm ${selectedChatId === chat.id ? "bg-white font-medium text-slate-900 shadow-sm" : "text-slate-600 hover:bg-slate-200/60"}`}>{chat.title}</button>)}</div></nav>
+          <div className="border-t border-slate-200 p-3"><p className="truncate px-2 pb-2 text-xs text-slate-500">{user.email}</p><Link href="/settings" onClick={() => setMobileNavOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-200/60 ${focusRing}`}><SlidersIcon className="h-4 w-4 text-slate-400" />Settings</Link><button type="button" onClick={() => { logout(); router.replace("/login") }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-200/60 ${focusRing}`}><LogoutIcon className="h-4 w-4 text-slate-400" />Log out</button></div>
+        </aside>
+
         {/* ---------- Main ---------- */}
         <main className="flex min-w-0 flex-1 flex-col bg-white">
           <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-semibold text-white md:hidden">M</div>
+              <button type="button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white md:hidden ${focusRing}`}><MenuIcon className="h-4 w-4" /></button>
               <h1 className="truncate text-sm font-semibold tracking-tight text-slate-900">{activeChatTitle}</h1>
             </div>
             <Avatar letter={userInitial} className="h-8 w-8 text-xs" />
