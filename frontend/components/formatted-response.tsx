@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 
 type FormattedResponseProps = {
   content: string
@@ -16,11 +16,36 @@ function formatInline(text: string): ReactNode[] {
   })
 }
 
+function CodeBlock({ code, language }: { code: string; language: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(code)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="my-3 overflow-hidden rounded-lg bg-zinc-950">
+      <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-1.5">
+        <span className="text-[11px] text-zinc-400">{language || "code"}</span>
+        <button type="button" onClick={copyCode} title={copied ? "Code copied" : "Copy code"} aria-label={copied ? "Code copied" : "Copy code"} className="rounded p-1 text-zinc-400 transition hover:bg-zinc-800 hover:text-white">
+          {copied ? "✓" : "⧉"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-4 text-left font-mono text-xs leading-5 text-zinc-100"><code>{code}</code></pre>
+    </div>
+  )
+}
+
 export function FormattedResponse({ content }: FormattedResponseProps) {
   const lines = content.trim().split("\n")
   const blocks: ReactNode[] = []
   let bullets: string[] = []
   let numbers: string[] = []
+  let inCode = false
+  let codeLanguage = ""
+  let codeLines: string[] = []
 
   const flushLists = () => {
     if (bullets.length) {
@@ -42,6 +67,26 @@ export function FormattedResponse({ content }: FormattedResponseProps) {
   }
 
   lines.forEach((line, index) => {
+    const fence = line.match(/^\s*```\s*([\w+-]*)\s*$/)
+    if (fence) {
+      if (inCode) {
+        blocks.push(
+          <CodeBlock key={`code-${index}`} code={codeLines.join("\n")} language={codeLanguage} />,
+        )
+        codeLines = []
+        codeLanguage = ""
+        inCode = false
+      } else {
+        flushLists()
+        codeLanguage = fence[1]
+        inCode = true
+      }
+      return
+    }
+    if (inCode) {
+      codeLines.push(line)
+      return
+    }
     const trimmed = line.trim()
     if (!trimmed) {
       flushLists()
@@ -67,6 +112,11 @@ export function FormattedResponse({ content }: FormattedResponseProps) {
       blocks.push(<p className="my-2 first:mt-0 last:mb-0" key={`paragraph-${index}`}>{formatInline(trimmed)}</p>)
     }
   })
+  if (inCode) {
+    blocks.push(
+      <CodeBlock key={`code-${blocks.length}`} code={codeLines.join("\n")} language={codeLanguage} />,
+    )
+  }
   flushLists()
 
   return <div>{blocks}</div>

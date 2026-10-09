@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
   try {
     snapshot = await db.collection("chats")
       .where("user_id", "==", req.user.uid)
-      .orderBy("createdAt", "desc")
+      .orderBy("updatedAt", "desc")
       .limit(limit)
       .get();
   } catch (error) {
@@ -41,7 +41,13 @@ router.get("/", async (req, res) => {
       .limit(limit)
       .get();
   }
-  res.json({ chats: snapshot.docs.map((document) => ({ id: document.id, ...document.data() })), hasMore: snapshot.size === limit });
+  const chats = snapshot.docs
+    .map((document) => ({ id: document.id, ...document.data() }))
+    .sort((a, b) => {
+      const getTime = (chat) => chat.updatedAt?._seconds || chat.updatedAt?.seconds || 0;
+      return getTime(b) - getTime(a);
+    });
+  res.json({ chats, hasMore: snapshot.size === limit });
 });
 
 router.post("/:chatId/messages", async (req, res) => {

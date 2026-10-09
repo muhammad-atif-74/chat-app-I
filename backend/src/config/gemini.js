@@ -16,8 +16,8 @@ function getGeminiErrorMessage(error) {
         const retryAfter = Number(error?.headers?.get?.("retry-after"));
         const hours = retryAfter ? Math.ceil(retryAfter / 3600) : null;
         return hours
-            ? `Daily AI limit reached. Please try again in about ${hours} hour${hours === 1 ? "" : "s"}.`
-            : "Daily AI limit reached. Please try again later.";
+            ? `Daily AI limit reached. Please try again in about ${hours} hour${hours === 1 ? "" : "s"} or try another model.`
+            : "Daily AI limit reached. Please try again later or try another model.";
     }
     return "The AI service is temporarily unavailable. Please try again shortly.";
 }

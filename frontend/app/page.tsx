@@ -242,10 +242,20 @@ export default function Home() {
                       <button
                         type="button"
                         aria-label={copiedIndex === index ? "Response copied" : "Copy response"}
-                        className="absolute bottom-2 right-3 rounded-md px-2 py-1 text-xs text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+                        title={copiedIndex === index ? "Response copied" : "Copy response"}
+                        className="absolute bottom-2 right-3 rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
                         onClick={() => handleCopy(message.response, index)}
                       >
-                        {copiedIndex === index ? "Copied" : "Copy"}
+                        {copiedIndex === index ? (
+                          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="m5 12 4 4L19 6" />
+                          </svg>
+                        ) : (
+                          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect width="13" height="13" x="8" y="8" rx="2" />
+                            <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </div>
