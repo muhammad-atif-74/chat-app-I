@@ -1,10 +1,3 @@
-
-console.log("Node version:", process.version);
-console.log(
-  "ESM require support:",
-  process.features?.require_module
-);
-
 const dotEnv = require('dotenv')
 dotEnv.config()
 
