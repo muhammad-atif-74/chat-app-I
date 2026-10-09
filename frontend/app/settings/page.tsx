@@ -25,7 +25,7 @@ export default function SettingsPage() {
     });
   }, [authUser]);
 
-  if (loading || !authUser) return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Loading...</div>;
+  if (loading || !authUser) return <div className="flex min-h-screen items-center justify-center bg-white"><span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-teal-700" aria-label="Loading" /></div>;
 
   const handleLogout = () => {
     logout();
@@ -73,24 +73,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 text-black">
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-[100dvh] bg-slate-50 text-slate-900">
+      <div className="flex min-h-[100dvh] w-full flex-col overflow-hidden bg-white">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:px-6"><div className="flex min-w-0 items-center gap-3"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-xs font-semibold text-white md:hidden">M</div><h1 className="truncate text-sm font-semibold tracking-tight text-slate-900">Settings</h1></div><div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-xs font-semibold text-teal-800">{(authUser.name || authUser.email || "U").slice(0, 1).toUpperCase()}</div></header>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 py-7 sm:px-12 lg:px-20">
+        <div className="mx-auto max-w-4xl">
         {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="mb-5 inline-flex text-sm text-gray-500 hover:text-black"
-          >
-            ← Back to chatbot
-          </Link>
-
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Settings
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Manage your profile, API access, subscription and account.
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <p className="mt-1 text-sm text-zinc-500">
+            Manage your profile, API access and account.
           </p>
+          <Link href="/" className="shrink-0 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-teal-800">Back to chat</Link>
         </div>
 
         <div className="space-y-6">
@@ -184,42 +177,43 @@ export default function SettingsPage() {
 
                 <button
                   onClick={copyApiKey}
-                  className="rounded-lg border border-black bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+                  className="rounded-lg bg-teal-700 px-4 py-3 text-sm font-medium text-white hover:bg-teal-800"
                 >
                   Copy
                 </button>
               </div>
-
-              <div className="mt-5 flex items-center gap-3">
-                <label htmlFor="plan" className="text-sm font-medium">Plan</label>
-                <select id="plan" value={plan} onChange={(event) => setPlan(event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                  <option value="free">Free</option>
-                  <option value="pro">Pro</option>
-                </select>
-                <button type="button" onClick={handleSaveSettings} disabled={saving || !apiKey.trim()} className="ml-auto rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white disabled:bg-gray-300">
-                  {saving ? "Saving..." : "Save settings"}
-                </button>
-              </div>
-              {message && <p className="mt-3 text-sm text-gray-600">{message}</p>}
-
               <p className="mt-3 text-xs text-gray-500">
                 Never share your API key publicly or commit it to
                 source control.
               </p>
 
+              <div className="mt-5 flex items-center gap-3">
+                {/* <label htmlFor="plan" className="text-sm font-medium">Plan</label>
+                <select id="plan" value={plan} onChange={(event) => setPlan(event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                  <option value="free">Free</option>
+                  <option value="pro">Pro</option>
+                </select> */}
+                <button type="button" onClick={handleSaveSettings} disabled={saving || !apiKey.trim()} className="ml-auto rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:bg-slate-200 disabled:text-slate-400">
+                  {saving ? "Saving..." : "Save settings"}
+                </button>
+              </div>
+              {message && <p className="mt-3 text-sm text-gray-600">{message}</p>}
+
+            
               <div className="mt-5">
+                <a target="_blank" href="https://ai.google.dev/gemini-api/docs/api-key?utm_source=google&utm_medium=cpc&utm_campaign=Cloud-SS-DR-AIS-FY26-global-gsem-1713578&utm_content=text-ad&utm_term=KW_gemini%20api%20key&gad_source=1&gad_campaignid=23417416052&gbraid=0AAAAACn9t648lkvfse4G36SL1JwvpmS4v&gclid=CjwKCAjwoaLWBhAWEiwAnyitu4KKNnfl3UUtHMV7U2w8nktO3_mpmoxt6MoqrRRb7RimQa3ex9wHqRoCQUUQAvD_BwE">
                 <button
-                  onClick={generateApiKey}
                   className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
-                >
+                  >
                   Generate new key
                 </button>
+                  </a>
               </div>
             </div>
           </section>
 
           {/* ================= PLAN ================= */}
-          <section className="rounded-2xl border border-gray-200 bg-white">
+          <section className="rounded-2xl border border-gray-200 bg-white hidden">
             <div className="border-b border-gray-100 px-6 py-5">
               <h2 className="font-semibold">Plan & Billing</h2>
 
@@ -240,7 +234,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white">
+                  <span className="rounded-full bg-teal-700 px-3 py-1 text-xs font-medium text-white">
                     Current
                   </span>
                 </div>
@@ -264,7 +258,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Pro */}
-              <div className="rounded-xl border-2 border-black p-5">
+              <div className="rounded-xl border-2 border-teal-700 p-5">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold">Pro</h3>
@@ -274,7 +268,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white">
+                  <span className="rounded-full bg-teal-700 px-3 py-1 text-xs font-medium text-white">
                     Upgrade
                   </span>
                 </div>
@@ -297,7 +291,7 @@ export default function SettingsPage() {
                 </ul>
 
                 <button
-                  className="mt-6 w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+                  className="mt-6 w-full rounded-lg bg-teal-700 px-4 py-3 text-sm font-medium text-white hover:bg-teal-800"
                   onClick={() => {
                     // TODO: Connect Stripe/payment checkout
                     console.log("Upgrade to Pro");
@@ -365,9 +359,11 @@ export default function SettingsPage() {
         </div>
 
         {/* Footer */}
-        <div className="py-8 text-center text-xs text-gray-400">
-          Chatbot Platform · Account Settings
+        <div className="py-8 text-center text-xs text-slate-400">
+          My AI Chat · Account Settings
         </div>
+      </div>
+      </div>
       </div>
     </main>
   );

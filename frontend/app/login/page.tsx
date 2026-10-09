@@ -70,25 +70,25 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-4 py-10 text-black">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white">
-            <span className="text-lg font-bold">AI</span>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-sm">
+            <span className="text-lg font-bold">M</span>
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight">
             Welcome back
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Login to continue to your chatbot.
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_12px_32px_-16px_rgba(15,23,42,0.2)] sm:p-8">
           {submitted && (
             <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
               Login form is valid.
@@ -114,10 +114,10 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.email
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -140,7 +140,7 @@ export default function LoginPage() {
 
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-gray-500 hover:text-black"
+                  className="text-xs font-medium text-slate-500 hover:text-teal-700"
                 >
                   Forgot password?
                 </Link>
@@ -154,10 +154,10 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.password
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -173,7 +173,7 @@ export default function LoginPage() {
               <input
                 id="remember"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 accent-black"
+                className="h-4 w-4 rounded border-slate-300 accent-teal-700"
               />
 
               <label
@@ -187,7 +187,7 @@ export default function LoginPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 active:scale-[0.99]"
+              className="w-full rounded-xl bg-teal-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-teal-800 active:scale-[0.99]"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
@@ -199,7 +199,7 @@ export default function LoginPage() {
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"
-                className="font-medium text-black underline underline-offset-4 hover:text-gray-600"
+                className="font-medium text-teal-700 underline underline-offset-4 hover:text-teal-800"
               >
                 Create an account
               </Link>

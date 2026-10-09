@@ -99,25 +99,25 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-black flex items-center justify-center px-4 py-10">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white">
-            <span className="text-lg font-bold">AI</span>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-sm">
+            <span className="text-lg font-bold">M</span>
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight">
             Create your account
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Register to start using the chatbot.
           </p>
         </div>
 
         {/* Form */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_12px_32px_-16px_rgba(15,23,42,0.2)] sm:p-8">
           {submitted && (
             <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
               Registration form is valid.
@@ -142,10 +142,10 @@ export default function RegisterPage() {
                 value={form.username}
                 onChange={handleChange}
                 placeholder="john_doe"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.username
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -172,10 +172,10 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.email
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -202,10 +202,10 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.password
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -236,10 +236,10 @@ export default function RegisterPage() {
                 value={form.confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-black ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 ${
                   errors.confirmPassword
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
               />
 
@@ -253,7 +253,7 @@ export default function RegisterPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 active:scale-[0.99]"
+              className="w-full rounded-xl bg-teal-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-teal-800 active:scale-[0.99]"
             >
               {loading ? "Creating account..." : "Create Account"}
             </button>
@@ -265,7 +265,7 @@ export default function RegisterPage() {
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-medium text-black underline underline-offset-4 hover:text-gray-600"
+                className="font-medium text-teal-700 underline underline-offset-4 hover:text-teal-800"
               >
                 Login
               </Link>
