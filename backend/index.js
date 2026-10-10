@@ -56,6 +56,7 @@ app.post('/ask', requireAuth, async (req, res) => {
 })
 
 app.post('/ask-stream', requireAuth, async (req, res) => {
+    console.log("[API CALLED] ASK STREAM API CALLED")
     try {
         const apiKey = await getUserApiKey(req.user.uid)
         if (!apiKey) return res.status(400).json({ error: 'Add your Gemini API key in settings first' })
