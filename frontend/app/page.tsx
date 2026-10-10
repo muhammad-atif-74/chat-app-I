@@ -4,6 +4,7 @@ import { FormattedResponse } from "@/components/formatted-response";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import APP_CONFIG from "@/app_config";
 import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModelTiers } from "@/lib/auth-client";
 
 /* ---------- Presentation helpers (no app logic) ---------- */
@@ -156,7 +157,8 @@ export default function Home() {
       const chatId = selectedChatId || (await createChat(normalizedPrompt.replace(/\s+/g, " ").slice(0, 60) || "New chat")).id
       setSelectedChatId(chatId)
       router.replace(`/?chat=${chatId}`)
-      const response = await fetch("/api/ask-stream", {
+      const backendUrl = (APP_CONFIG.api_url || "http://localhost:8080").replace(/\/+$/, "")
+      const response = await fetch(`${backendUrl}/ask-stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getSession()?.idToken || ""}` },
         body: JSON.stringify({ prompt: normalizedPrompt, model: selectedModel }),
