@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import APP_CONFIG from "@/app_config";
 import { addChatMessage, createChat, getChatMessages, getChats, getGeminiModels, getSession, type ChatRecord, type GeminiModelTiers } from "@/lib/auth-client";
+import { ApiKeyRequiredModal } from "@/components/ApiKeyRequiredModal";
 
 /* ---------- Presentation helpers (no app logic) ---------- */
 
@@ -68,7 +69,7 @@ export default function Home() {
   const [loadingChats, setLoadingChats] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [modelTiers, setModelTiers] = useState<GeminiModelTiers>({ budget: [], balanced: [], higher: [] })
-  const [selectedTier, setSelectedTier] = useState<keyof GeminiModelTiers>("balanced")
+  const [selectedTier, setSelectedTier] = useState<keyof GeminiModelTiers>("budget")
   const [selectedModel, setSelectedModel] = useState("gemini-3.6-flash")
   const [loadingModels, setLoadingModels] = useState(false)
   const [error, setError] = useState("")
@@ -101,8 +102,7 @@ export default function Home() {
       setLoadingModels(true)
       getGeminiModels().then((tiers) => {
         setModelTiers(tiers)
-        const defaultModel = tiers.balanced.find((model) => model.id === "gemini-3.6-flash")
-        const firstModel = defaultModel || tiers.balanced[0] || tiers.budget[0] || tiers.higher[0]
+        const firstModel = tiers.budget[0] || tiers.balanced[0] || tiers.higher[0]
         if (firstModel) setSelectedModel(firstModel.id)
       }).catch(() => setModelTiers({ budget: [], balanced: [], higher: [] })).finally(() => setLoadingModels(false))
     }, 0)
@@ -146,7 +146,8 @@ export default function Home() {
   const handleAskAI = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const normalizedPrompt = prompt.trim()
-    if (!normalizedPrompt) return
+    // if (!normalizedPrompt) return
+    if (!normalizedPrompt || !hasSettings) return
     setError("")
     setIsLoading(true)
     setStreamStarted(false)
@@ -319,12 +320,6 @@ export default function Home() {
                   <Spinner className="h-6 w-6 text-slate-400" label="Loading messages" />
                 </div>
               ) : <>
-                {!settingsLoading && !hasSettings && (
-                  <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <span>Add your API key in settings to finish setup.</span>
-                    <Link href="/settings" className={`shrink-0 rounded font-semibold underline underline-offset-4 ${focusRing}`}>Open settings</Link>
-                  </div>
-                )}
 
                 {messages.map((message, index) => (
                   <div className="space-y-6" key={`${message.prompt}-${index}`}>
@@ -378,6 +373,7 @@ export default function Home() {
                       {["Explain a concept", "Help me write", "Brainstorm ideas"].map((suggestion) => (
                         <button
                           key={suggestion}
+                          disabled={!hasSettings}
                           type="button"
                           onClick={() => { setPrompt(suggestion); promptInputRef.current?.focus() }}
                           className={`rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-teal-600/40 hover:bg-teal-50 hover:text-teal-800 ${focusRing}`}
@@ -399,8 +395,9 @@ export default function Home() {
               <div className="rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)] transition focus-within:border-teal-600/60 focus-within:ring-4 focus-within:ring-teal-600/10">
                 <textarea
                   ref={promptInputRef}
-                  className="block max-h-32 min-h-11 w-full resize-none overflow-y-auto rounded-t-2xl bg-transparent px-4 py-2.5 text-[15px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
-                  placeholder="Ask anything..."
+                  className="block max-h-32 min-h-11 w-full resize-none overflow-y-auto rounded-t-2xl bg-transparent px-4 py-2.5 text-[15px] leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
+                  disabled={!hasSettings}
+                  placeholder={hasSettings ? "Ask anything..." : "Add your API key in settings to start chatting"}
                   rows={1}
                   onChange={(e) => {
                     e.currentTarget.style.height = "auto"
@@ -441,7 +438,7 @@ export default function Home() {
                   </div>
                   <button
                     type="submit"
-                    disabled={isLoading || !prompt.trim()}
+                    disabled={isLoading || !prompt.trim() || !hasSettings}
                     className={`flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-teal-700 pl-4 pr-3 text-sm font-medium text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none ${focusRing}`}
                   >
                     {isLoading ? <Spinner className="mr-1 h-4 w-4" label="Sending" /> : <>Send<ArrowUpIcon className="h-4 w-4" /></>}
@@ -453,6 +450,8 @@ export default function Home() {
           </form>
         </main>
       </div>
+      {!settingsLoading && !hasSettings && <ApiKeyRequiredModal />}
+
     </section>
   );
 }
