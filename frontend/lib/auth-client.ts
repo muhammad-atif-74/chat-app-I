@@ -28,5 +28,6 @@ export function saveUserSettings(apiKey: string, plan: string) { return request(
 export async function getGeminiModels(): Promise<GeminiModelTiers> { return (await request("/models")).models }
 export async function getChats(limit = 25): Promise<ChatRecord[]> { return (await request(`/chats?limit=${limit}`)).chats }
 export async function createChat(title: string) { return request("/chats", { method: "POST", body: JSON.stringify({ title }) }) as Promise<ChatRecord> }
+export function deleteChat(chatId: string) { return request(`/chats/${chatId}`, { method: "DELETE" }) }
 export function addChatMessage(chatId: string, req: string, res: string, model = "gemini-3.6-flash") { return request(`/chats/${chatId}/messages`, { method: "POST", body: JSON.stringify({ req, res, model }) }) }
 export async function getChatMessages(chatId: string): Promise<ChatMessage[]> { return (await request(`/chats/${chatId}/messages`)).messages }

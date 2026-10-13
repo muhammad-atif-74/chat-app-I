@@ -43,11 +43,19 @@ router.get("/", async (req, res) => {
   }
   const chats = snapshot.docs
     .map((document) => ({ id: document.id, ...document.data() }))
+    .filter((chat) => chat.isDeleted !== true)
     .sort((a, b) => {
       const getTime = (chat) => chat.updatedAt?._seconds || chat.updatedAt?.seconds || 0;
       return getTime(b) - getTime(a);
     });
   res.json({ chats, hasMore: snapshot.size === limit });
+});
+
+router.delete("/:chatId", async (req, res) => {
+  const chat = await getOwnedChat(req.params.chatId, req.user.uid);
+  if (!chat) return res.status(404).json({ error: "Chat not found" });
+  await chat.update({ isDeleted: true, updatedAt: FieldValue.serverTimestamp() });
+  res.json({ id: req.params.chatId, isDeleted: true });
 });
 
 router.post("/:chatId/messages", async (req, res) => {
